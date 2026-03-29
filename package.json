@@ -1,0 +1,15 @@
+{
+  "name": "bdata",
+  "version": "1.0.0",
+  "description": "a backend at chetans laptop",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "javascript",
+    "backend"
+  ],
+  "author": "chetan",
+  "license": "ISC"
+}
