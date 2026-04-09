@@ -2,12 +2,13 @@ import mongoose ,{ Schema } from "mongoose";
 
 
 import { JsonWebTokenError } from "jsonwebtoken";
+
 import bcrypt from "bcrypt"
 
 const userSchema = new Schema({
     username:{
         type:String,
-        require:true,
+        required:true,
         unique:true,
         lowercase:true,
         trim:true,
@@ -15,20 +16,20 @@ const userSchema = new Schema({
     },
     email:{
         type:String,
-        require:true,
+        required:true,
         unique:true,
         lowercase:true,
         trim:true
     },
      fullName:{
         type:String,
-        require:true,
+        required:true,
         index:true,
         trim:true
     },
     avatar:{
         typr:String,// cloudinary url 
-        require:true,
+        required:true,
     },
     coverImage:{
         type:String, // cloudinary url
@@ -53,7 +54,7 @@ const userSchema = new Schema({
 userSchema.pre("save", async function (next) {
     if(!this.ismodified("password")) return next();
 
-    this.password = bcrypt.hash(this.password, 10)
+    this.password = await bcrypt.hash(this.password, 10)
     next()
 })
 
