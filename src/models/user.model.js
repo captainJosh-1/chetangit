@@ -1,7 +1,7 @@
 import mongoose ,{ Schema } from "mongoose";
 
 
-import { JsonWebTokenError } from "jsonwebtoken";
+import jwt  from "jsonwebtoken";
 
 import bcrypt from "bcrypt"
 
@@ -28,7 +28,7 @@ const userSchema = new Schema({
         trim:true
     },
     avatar:{
-        typr:String,// cloudinary url 
+        type:String,// cloudinary url 
         required:true,
     },
     coverImage:{
@@ -52,11 +52,13 @@ const userSchema = new Schema({
 
 
 userSchema.pre("save", async function (next) {
-    if(!this.ismodified("password")) return next();
+    // if(!this.isModified("password")) return next();
+    if(!this.isModified("password")) return ;
 
     this.password = await bcrypt.hash(this.password, 10)
-    next()
-})
+    // next()
+    //because of oe error i comment it 
+});
 
 
 //custom methods
@@ -65,7 +67,7 @@ userSchema.methods.isPasswordCorrect = async function (password) {
 }
 
 userSchema.methods.genrateAccessToken = function(){
-    jwt.sign(
+ return jwt.sign(
         {
             _id: this.id,
             email:this.email,
@@ -79,7 +81,7 @@ userSchema.methods.genrateAccessToken = function(){
     )
 }
 userSchema.methods.genrateRefreshToken = function(){
-    jwt.sign(
+     return jwt.sign(
         {
             _id: this.id,
         },
