@@ -1,5 +1,7 @@
 import { Router } from "express";
-import { registerUser } from "../controllers/user.controller.js";
+import { loginUser  ,logoutUser,registerUser } from "../controllers/user.controller.js";
+
+import { verifyJWT } from "../middelwares/auth.middleware.js";
 
 import { upload } from "../middelwares/multer.middelware.js";
 
@@ -18,10 +20,13 @@ router.route("/register").post(
         }
     ]),
     registerUser)
-
     // upload.fielf it is an middelware which is injected just before the registeruser method  
 
+router.route("/login").post(loginUser)
 
+
+//secured routes
+router.route("/logout").post(verifyJWT , logoutUser) 
 
 
 export default router
