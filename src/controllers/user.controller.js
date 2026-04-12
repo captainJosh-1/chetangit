@@ -215,7 +215,8 @@ if (coverImageLocalPath) {
     })    
 
      const logoutUser = asyncHandler(async(req , res ) =>{
-        //like User.findById ,we cant do it because how we will get email or username ? so thats the problem like we cant give a form to user fill for logout
+        //like User.findById ,we cant do it because how we will get email or username ? 
+        // so thats the problem like we cant give a form to user fill for logout
         
          //logout so remove refrestoken and cookies 
        //by creating our own middelware 
@@ -232,10 +233,12 @@ if (coverImageLocalPath) {
             new : true
         }
        )
+
        const options = {
         httpOnly: true,
         secure: true
        }
+
        return res
        .status(200)
        .clearCookie("accessToken" , options)
@@ -252,7 +255,7 @@ if (coverImageLocalPath) {
         // from where we will get the refreshtoken oh ok we can get from cookies 
        const incomigRefreshToken =  req.cookie.refreshToken || req.body.refreshToken
 
-       if(incomigRefreshToken){
+       if(!incomigRefreshToken){
         throw new ApiError(401,"unauthorized request")
        }
        
