@@ -1,9 +1,10 @@
-import { ApiError } from "../utils/ApiError";
-import { asyncHandler } from "../utils/asyncHandler";
+import { ApiError } from "../utils/ApiError.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 import jwt from "jsonwebtoken"
 
 
-import { User } from "../models/user.model";
+import { User } from "../models/user.model.js";
+//design our first middleware 
 
 export const verifyJWT = asyncHandler(async(req , res , next)=>{
   try {
@@ -13,9 +14,13 @@ export const verifyJWT = asyncHandler(async(req , res , next)=>{
           throw new ApiError(401,"Unauthorizad request")
       }
   
+      
+
       const decodedToken = jwt.verify(token , process.env.ACCESS_TOKEN_SCREAT)
   
-      const user = await User.findById(decodedToken?._id).select("-password , -refreshToken")
+
+
+      const user = await User.findById(decodedToken?._id).select("-password -refreshToken")
   
       //if user nhi h to  error 
       if(!user){
@@ -29,7 +34,7 @@ export const verifyJWT = asyncHandler(async(req , res , next)=>{
 
       
   } catch (error) {
-    throw new ApiError(401,"Invalid access token ")
+    throw new ApiError(401,error?.message || "Invalid access token ")
   }
 
 })

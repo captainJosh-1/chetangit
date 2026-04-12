@@ -9,8 +9,12 @@ import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 import { ApiResponse } from "../utils/ApiResponse.js";
 
+import jwt from "jsonwebtoken";
+
 
 // just create one methode after registering the user while working on login 
+
+//saving the token (context while you hit the endpoint to comapre refreshtoken)
 
 const genrateAccessAndRefreshTokens = async(userId)=>
     {
@@ -19,10 +23,13 @@ const genrateAccessAndRefreshTokens = async(userId)=>
         const accessToken =user.genrateAccessToken()
         const refreshToken = user.genrateRefreshToken()
 
+        //to add in obj and save it in obj 
         user.refreshToken = refreshToken
         await user.save({ validateBeforeSave: false })
 
+        // return accesstoken and refreshtoken 
         return { accessToken , refreshToken }
+        //now this method just need userID and it will genrate both th tokens and save it to the db and return the tokens which are genrated ,just by this method
 
 
     } catch (error) {
@@ -145,7 +152,6 @@ if (coverImageLocalPath) {
     )
 })
 
-
     const loginUser = asyncHandler(async(req , res )=>{
 
         //req body = > data
@@ -153,13 +159,15 @@ if (coverImageLocalPath) {
         //find the user 
         //password check 
         //access and refresh token 
-        //send cookies
+        //     (meaning allowing user to login)
+        //send cookies 
+        //      (means saving login data)
         //send res
         
 
         const {email, username , password } = req.body
 
-        if(!username || !email){
+        if(!username && !email){
             throw new ApiError(400, "username or email is required")
         }
 
@@ -179,11 +187,14 @@ if (coverImageLocalPath) {
         }
 
 
+        // method is returning both the token so we collect them by { - , -}
         const { accessToken , refreshToken } =await genrateAccessAndRefreshTokens(user._id)
 
 // optional step 
        const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
        
+
+       // only modified by server 
        const options ={
         httpOnly: true,
         secure: true
@@ -201,14 +212,10 @@ if (coverImageLocalPath) {
          )
        )
 
+    })    
 
-
-        
-      
-    })
-
-    
      const logoutUser = asyncHandler(async(req , res ) =>{
+        //like User.findById ,we cant do it because how we will get email or username ? so thats the problem like we cant give a form to user fill for logout
         
          //logout so remove refrestoken and cookies 
        //by creating our own middelware 
@@ -236,4 +243,60 @@ if (coverImageLocalPath) {
        .json(new ApiResponse(200,{}, "User Logged Out "))
     })
 
-export {registerUser , loginUser , logoutUser }
+    //if your access token get expired then you can hit an endpoint and beckend will 
+    // compare your refreshtoken with saved refreshtoken and if they matched it will give you 
+    // a new access token     
+    //so we are about to create a new endpoint 
+
+    const refreshAccessToken = asyncHandler(async(req , res)=>{
+        // from where we will get the refreshtoken oh ok we can get from cookies 
+       const incomigRefreshToken =  req.cookie.refreshToken || req.body.refreshToken
+
+       if(incomigRefreshToken){
+        throw new ApiError(401,"unauthorized request")
+       }
+       
+    //    jwt.verify(
+    //     incomigRefreshToken , process.env.REFESH_TOKEN_SCREAT
+    //    )
+     
+    const decodeToken = jwt.verify(
+        incomigRefreshToken , process.env.REFESH_TOKEN_SCREAT
+       )
+
+       const user = await User.findById(decodeToken?._id)
+
+       if(!user){
+        throw new ApiError(401,"Invalid refresh token")
+       }
+       // now compare both the refresh token i mean the decoded one and
+       //  the one which is save in user"s cookie from user side by if 
+
+       if(incomigRefreshToken !== user?.refreshToken ){
+        throw new ApiError("Refresh Token is exipired is expired or used ")
+       }
+
+       //if both the match then ok you can have new access token 
+       //to genrate new access token , we will send in cookies 
+       //always like this 
+       const options = {
+        httpOnly: true,
+        secure: true
+       }
+      const {accessToken , newRefreshToken} = await genrateAccessAndRefreshTokens(user._id)
+
+       return res.status(200)
+       .cookie("accessToken" , accessToken , options)
+       .cookie("refreshToken" , newRefreshToken , options)
+       .json(
+        new ApiResponse(
+            200,
+            {accessToken , refreshToken: newRefreshToken},
+            "Access token refreshed"
+        )
+       )
+
+
+    })
+
+export {registerUser , loginUser , logoutUser , refreshAccessToken }
