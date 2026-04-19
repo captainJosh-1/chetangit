@@ -351,7 +351,7 @@ if (coverImageLocalPath) {
     const updateAccountDetails = asyncHandler(async(req , res)=>{
         const {fullName , email} = req.body
 
-        if(!funnName || !email){
+        if(!fullName || !email){
             throw new ApiError(40 , "All fields are required")
         }
 
@@ -367,7 +367,6 @@ if (coverImageLocalPath) {
 
         return res.status(200).json(new ApiResponse(200, user , "Account details uploaded successfully"))
     })
-
 
     const updateUserAvatar = asyncHandler(async(req , res)=>{
         const avatarLocalPath = req.file?.path
@@ -508,7 +507,7 @@ if (coverImageLocalPath) {
             {
                 $lookup:{
                     from:"videos",
-                    localField:watchHistory ,
+                    localField:"watchHistory" ,
                     foreignField:"_id",
                     as: "watchHistory", // till now 
                     pipeline:[ // now we are in video model
