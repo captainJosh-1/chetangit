@@ -17,13 +17,17 @@ import mongoose from "mongoose";
 // just create one methode after registering the user while working on login 
 
 //saving the token (context while you hit the endpoint to comapre refreshtoken)
-
-const genrateAccessAndRefreshTokens = async(userId)=>
+const generateAccessAndRefreshTokens = async(userId)=>
     {
     try{ 
         const user = await User.findById(userId)
-        const accessToken =user.genrateAccessToken()
-        const refreshToken = user.genrateRefreshToken()
+
+        if (!user) {
+    throw new ApiError(404, "User not found")
+}
+
+        const accessToken =user.generateAccessToken()
+        const refreshToken = user.generateRefreshToken()
 
         //to add in obj and save it in obj 
         user.refreshToken = refreshToken
@@ -35,6 +39,8 @@ const genrateAccessAndRefreshTokens = async(userId)=>
 
 
     } catch (error) {
+        console.log("ACTUAL ERROR: ", error);
+        
         throw new ApiError(500,"something went wrong while genrating refresh and access token")
     }
 }
@@ -190,7 +196,7 @@ if (coverImageLocalPath) {
 
 
         // method is returning both the token so we collect them by { - , -}
-        const { accessToken , refreshToken } =await genrateAccessAndRefreshTokens(user._id)
+        const { accessToken , refreshToken } =await generateAccessAndRefreshTokens(user._id)
 
 // optional step 
        const loggedInUser = await User.findById(user._id).select("-password -refreshToken")
@@ -227,8 +233,10 @@ if (coverImageLocalPath) {
       await User.findByIdAndUpdate(
         req.user._id,
         {
-            $set: {
-                refreshToken: undefined
+            $unset: {   // set to unset and undefined to 1 , undefined mean its still there but value is not defined 
+                //and in unset refreshtoken 1 means we remove it completely
+                //just refreshtoken 1 and in unset , it removed
+                refreshToken: 1
             }
         },
         {
@@ -255,9 +263,9 @@ if (coverImageLocalPath) {
 
     const refreshAccessToken = asyncHandler(async(req , res)=>{
         // from where we will get the refreshtoken oh ok we can get from cookies 
-       const incomigRefreshToken =  req.cookie.refreshToken || req.body.refreshToken
+       const incomingRefreshToken  =  req.cookies.refreshToken || req.body.refreshToken
 
-       if(!incomigRefreshToken){
+       if(!incomingRefreshToken ){
         throw new ApiError(401,"unauthorized request")
        }
        
@@ -265,41 +273,45 @@ if (coverImageLocalPath) {
     //     incomigRefreshToken , process.env.REFESH_TOKEN_SCREAT
     //    )
      
-    const decodeToken = jwt.verify(
-        incomigRefreshToken , process.env.REFESH_TOKEN_SCREAT
-       )
-
-       const user = await User.findById(decodeToken?._id)
-
-       if(!user){
-        throw new ApiError(401,"Invalid refresh token")
-       }
-       // now compare both the refresh token i mean the decoded one and
-       //  the one which is save in user"s cookie from user side by if 
-
-       if(incomigRefreshToken !== user?.refreshToken ){
-        throw new ApiError("Refresh Token is exipired is expired or used ")
-       }
-
-       //if both the match then ok you can have new access token 
-       //to genrate new access token , we will send in cookies 
-       //always like this 
-       const options = {
-        httpOnly: true,
-        secure: true
-       }
-      const {accessToken , newRefreshToken} = await genrateAccessAndRefreshTokens(user._id)
-
-       return res.status(200)
-       .cookie("accessToken" , accessToken , options)
-       .cookie("refreshToken" , newRefreshToken , options)
-       .json(
-        new ApiResponse(
-            200,
-            {accessToken , refreshToken: newRefreshToken},
-            "Access token refreshed"
-        )
-       )
+    try {
+        const decodeToken = jwt.verify(
+            incomingRefreshToken  , process.env.REFRESH_TOKEN_SECRET
+           )
+    
+           const user = await User.findById(decodeToken?._id)
+    
+           if(!user){
+            throw new ApiError(401,"Invalid refresh token")
+           }
+           // now compare both the refresh token i mean the decoded one and
+           //  the one which is save in user"s cookie from user side by if 
+    
+           if(incomingRefreshToken  !== user?.refreshToken ){
+            throw new ApiError(401,"Refresh Token is exipired is expired or used ")
+           }
+    
+           //if both the match then ok you can have new access token 
+           //to genrate new access token , we will send in cookies 
+           //always like this 
+           const options = {
+            httpOnly: true,
+            secure: true
+           }
+          const {accessToken , refreshToken: newRefreshToken} = await generateAccessAndRefreshTokens (user._id)
+    
+           return res.status(200)
+           .cookie("accessToken" , accessToken , options)
+           .cookie("refreshToken" , newRefreshToken , options)
+           .json(
+            new ApiResponse(
+                200,
+                {accessToken , refreshToken: newRefreshToken},
+                "Access token refreshed"
+            )
+           )
+    } catch (error) {
+        throw new ApiError(401, error?.message || "Invalid refresh token")
+    }
 
 
     })
@@ -325,8 +337,6 @@ if (coverImageLocalPath) {
         await user.save({validateBeforeSave: false}) // we dont want to run other fields so validate = false
         return res.status(200)
         .json(new ApiResponse(200 ,{} , "Password changed successfully"))
-
-
 
     })
 
@@ -536,6 +546,6 @@ if (coverImageLocalPath) {
         .json(new ApiResponse(
             200 , user[0].watchHistory,"watch history fetched successfully"
         ))
-    }) 
+    })  
 export {registerUser , loginUser , logoutUser , refreshAccessToken , changeCurrentPassword , updateAccountDetails, getCurrentUser,updateUserAvatar ,
      updateUsercoverImage,getUserChannelProfile,getWatchHistory }
