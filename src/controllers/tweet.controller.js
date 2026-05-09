@@ -4,7 +4,6 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { Tweet } from "../models/tweet.model";
 import { ApiError } from "../utils/ApiError";
 import { ApiResponse } from "../utils/ApiResponse";
-
 const createTweet = asyncHandler(async(req , res)=>{
     //get content from req.body 
     //get userid
