@@ -104,9 +104,8 @@ const updateComment = asyncHandler(async(req , res)=>{
 })
 
 const getAllComments = asyncHandler(async(req , res)=>{
-//get videod 
+//get video
 //validate
-//auth user
 //get page and limit 
 //find comment with videoId
 //apply skip and limit 
@@ -134,4 +133,4 @@ return res.status(200).json(new ApiResponse(comments , "comments are fetched suc
 
 
 })
-export {addComment , deleteComment , updateComment}
+export {addComment , deleteComment , updateComment , getAllComments}

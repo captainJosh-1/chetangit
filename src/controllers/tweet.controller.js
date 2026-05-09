@@ -25,7 +25,7 @@ const createTweet = asyncHandler(async(req , res)=>{
         owner
     })
 
-    return res.ststus(201).json(new ApiResponse(tweet , "Tweet is added successfully"))
+    return res.status(201).json(new ApiResponse(tweet , "Tweet is added successfully"))
 })
 
 const deleteTweet = asyncHandler(async(req , res)=>{
@@ -86,7 +86,24 @@ return res.ststus(200).json(new ApiResponse(tweet , "Tweet is updated successful
 })
 
 const getAllTweet = asyncHandler(async(req , res)=>{
-//do it later 
+//getpage and limit 
+//find tweet
+//apply skip and limit 
+//return
+
+//pagination
+
+const page = parseInt(req.query.page) || 1
+const limit = parseInt(req.query.limit) || 10
+
+const skip =(page - 1)* limit
+
+const tweets =await Tweet.find({owner : userId })
+.skip(skip)
+.limit(limit)
+.sort({ createdAt : -1 })
+
+return res.status(200).json(new ApiResponse(tweets, "tweete are fetched successfully"))
 })
 
-export {createTweet , deleteTweet , upadteTweet}
+export {createTweet , deleteTweet , upadteTweet , getAllTweet}
