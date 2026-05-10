@@ -149,3 +149,5 @@ if(!video){
 
 return res.status(200).json(new ApiResponse(video , "video is deleted successfully"))
 })
+
+export{publishAVideo , getAllVideo,togglePublishStatus,updateVideo,deleteVideo}
