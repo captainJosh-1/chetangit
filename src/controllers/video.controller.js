@@ -2,6 +2,7 @@ import { asyncHandler } from "../utils/asyncHandler";
 import { Video } from "../models/video.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
+import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 
 const publishAVideo = asyncHandler(async(req , res)=>{
@@ -12,38 +13,44 @@ const publishAVideo = asyncHandler(async(req , res)=>{
     //save in DB 
     // return
 
-
     //get data
-    const {title , description , videoFile , thumbnail }=req.body
 
-    if(!title || !description || !videoFile || !thumbnail) {
-        throw new ApiError(400 , "All fields are required")
+    const { title , description} = req.body
+
+    if(!title || description){
+        throw new ApiError(400 , "Title and decription required")
     }
 
+    const videoLocalPath = req.files?.videoFile?.[0].path
+    const thumbnailLocalPath = req.files?.thumbnail?.[0].path
 
+    if(!videoLocalPath || !thumbnailLocalPath){
+        throw new ApiError(400 , "Video and thumbnail are required ")
+    }
 
+    const videoUpload = await uploadOnCloudinary(videoLocalPath)
+    const thumbnailUpload  = await uploadOnCloudinary(thumbnailLocalPath)
 
-
-    // need to update the code by cloudinary 
-
-
-
+    if(!videoUpload || !thumbnailUpload){
+        throw new ApiError(500 , "Error uploading to cloud")
+    }
 
 
     const video =await  Video.create({
         title,
         description,
-        videoFile , // temprory string 
-        thumbnail, // temprory string 
+        videoFile:videoUpload.secure_url , // temprory string 
+        thumbnail :thumbnailUpload.secure_url, // temprory string 
         owner:req.user._id,
         isPublished: true
     })
 
-    return res.status(201).json(new ApiResponse(video , "Video uploaded successfully"))
+    return res.status(201).json(new ApiResponse(video, 
+        "Video uploaded successfully"))
 })
 
-const  getAllVideo = asyncHandler(async(req , res)=>{
 
+const  getAllVideo = asyncHandler(async(req , res)=>{
 
     const page = parseInt(req.query.page) || 1
     const limit = parseInt(req.query.limit) || 10
