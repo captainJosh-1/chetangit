@@ -1,8 +1,9 @@
-import { asyncHandler } from "../utils/asyncHandler";
+import { asyncHandler } from "../utils/asyncHandler.js";
 import { Video } from "../models/video.model.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import mongoose from "mongoose";
 
 
 const publishAVideo = asyncHandler(async(req , res)=>{
@@ -17,7 +18,7 @@ const publishAVideo = asyncHandler(async(req , res)=>{
 
     const { title , description} = req.body
 
-    if(!title || description){
+    if(!title || !description){
         throw new ApiError(400 , "Title and decription required")
     }
 
@@ -42,10 +43,11 @@ const publishAVideo = asyncHandler(async(req , res)=>{
         videoFile:videoUpload.secure_url , // temprory string 
         thumbnail :thumbnailUpload.secure_url, // temprory string 
         owner:req.user._id,
-        isPublished: true
+        isPublished: true,
+        duration: videoUpload.duration
     })
 
-    return res.status(201).json(new ApiResponse(video, 
+    return res.status(201).json(new ApiResponse(201,video, 
         "Video uploaded successfully"))
 })
 
@@ -115,7 +117,7 @@ video.isPublished = !video.isPublished
 
 await video.save()
 
-return res.status(200).json(new ApiResponse(400 , "video is toggeled "))
+return res.status(200).json(new ApiResponse(200 , "video is toggeled "))
 
 })
 
