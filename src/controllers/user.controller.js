@@ -378,7 +378,7 @@ if (coverImageLocalPath) {
         const avatar = await uploadOnCloudinary(avatarLocalPath)
 
         if(!avatar.url){
-            throw new ApiError("Error while uploading on avatar")
+            throw new ApiError(500,"Error while uploading on avatar")
         }
 
         const user = await User.findByIdAndUpdate(req.user?._id,
@@ -390,9 +390,9 @@ if (coverImageLocalPath) {
             {new: true}
         ).select("-password")
 
-        return res.status(200,json(
+        return res.status(200).json(
             new ApiResponse(200,user , "avatarImage is uploaded successfully")
-        ))
+        )
     })
 
     const updateUsercoverImage = asyncHandler(async(req , res)=>{
@@ -417,9 +417,9 @@ if (coverImageLocalPath) {
             {new :true}
         ).select("-password")
 
-        return res.status(200,json(
+        return res.status(200).json(
             new ApiResponse(200,user , "coverImage is uploaded successfully")
-        ))
+        )
     })
 
     //now 19 something for me 
@@ -433,7 +433,7 @@ if (coverImageLocalPath) {
         const channel = await User.aggregate([
             {
                 $match :{
-                    usrename :username?.toLowerCase()
+                    username :username?.toLowerCase()
                 }
             },
             {
@@ -461,7 +461,7 @@ if (coverImageLocalPath) {
                         $size: "$subscribedTo"
                     },
                     isSubscribed :{
-                        $condition:{
+                        $cond:{
                             if:{$in :[req.user?._id ,  "$subscribers.subscriber"]},
                             then : true,
                             else: false
