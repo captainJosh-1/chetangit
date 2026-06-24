@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
-import { asyncHandler } from "../utils/asyncHandler";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
-import { Tweet } from "../models/tweet.model";
-import { ApiError } from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponse";
+import { Tweet } from "../models/tweet.model.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
 const createTweet = asyncHandler(async(req , res)=>{
     //get content from req.body 
     //get userid
@@ -24,7 +24,7 @@ const createTweet = asyncHandler(async(req , res)=>{
         owner
     })
 
-    return res.status(201).json(new ApiResponse(tweet , "Tweet is added successfully"))
+    return res.status(201).json(new ApiResponse(201,tweet , "Tweet is added successfully"))
 })
 
 const deleteTweet = asyncHandler(async(req , res)=>{
@@ -47,7 +47,7 @@ const deleteTweet = asyncHandler(async(req , res)=>{
   }
   const deletedTweet = await Tweet.findByIdAndDelete(tweetId)
 
-  return res.status(200).json(new ApiResponse(deletedTweet,"Tweet is deleted successfully "))
+  return res.status(200).json(new ApiResponse(201 , deletedTweet,"Tweet is deleted successfully "))
 })
 
 
@@ -81,28 +81,27 @@ if(tweet.owner.toString() !== req.user._id.toString()){
 tweet.content = content
 await tweet.save()
 
-return res.ststus(200).json(new ApiResponse(tweet , "Tweet is updated successfully"))
+return res.status(200).json(new ApiResponse(200 , tweet , "Tweet is updated successfully"))
 })
 
-const getAllTweet = asyncHandler(async(req , res)=>{
-//getpage and limit 
-//find tweet
-//apply skip and limit 
-//return
+const getUserTweets = asyncHandler(async (req, res) => {
+    const { userId } = req.params;
 
-//pagination
+    if (!mongoose.isValidObjectId(userId)) {
+        throw new ApiError(400, "Invalid user ID");
+    }
 
-const page = parseInt(req.query.page) || 1
-const limit = parseInt(req.query.limit) || 10
+    const tweets = await Tweet.find({
+        owner: userId
+    }).sort({ createdAt: -1 });
 
-const skip =(page - 1)* limit
+    return res.status(200).json(
+        new ApiResponse(
+            200,
+            tweets,
+            "User tweets fetched successfully"
+        )
+    );
+});
 
-const tweets =await Tweet.find({owner : userId })
-.skip(skip)
-.limit(limit)
-.sort({ createdAt : -1 })
-
-return res.status(200).json(new ApiResponse(tweets, "tweete are fetched successfully"))
-})
-
-export {createTweet , deleteTweet , upadteTweet , getAllTweet}
+export {createTweet , deleteTweet , upadteTweet , getUserTweets}
