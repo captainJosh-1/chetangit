@@ -1,7 +1,7 @@
-import { Playlist } from "../models/playlist.model";
-import { ApiError } from "../utils/ApiError";
-import { ApiResponse } from "../utils/ApiResponse";
-import { asyncHandler } from "../utils/asyncHandler";
+import { Playlist } from "../models/playlist.model.js";
+import { ApiError } from "../utils/ApiError.js";
+import { ApiResponse } from "../utils/ApiResponse.js";
+import { asyncHandler } from "../utils/asyncHandler.js";
 
 const createPlaylist =asyncHandler(async(req , res)=>{
 //get name and des from req.body 
@@ -79,44 +79,61 @@ const updatePlaylist =asyncHandler(async(req , res)=>{
 //Now DB and find and update
 //return
 const { playlistId } = req.params
+
 if(!playlistId){
     throw new ApiError(400 , "PlaylistId is required ")
 }
+
+const playlist = await Playlist.findById(playlistId);
+
+if(!playlist){
+    throw new ApiError(404, "Playlist not found")
+}
+
+if(playlist.owner.toString() !== req.user._id.toString()){
+    throw new ApiError(403 , "unauthorized user")
+}
+
 const{ name , description }= req.body
 
 if(!name && !description){
     throw new ApiError(400 , "atleast one is required")
 }
 
-if(playlist.owner.toString() !== req.user._id.toString()){
-    throw new ApiError(403 , "unauthorized user")
-}
 const updatedPlaylist = await Playlist.findByIdAndUpdate(
     playlistId,
     {
-    name : name,
-    description : description
+    $set: {
+    name,
+    description
+    }
     },
     { new : true }
-)
-if(!updatedPlaylist){
-     throw new ApiError(404, "Playlist not found")
-    }
-return res.status(200).json(new ApiResponse(updatedPlaylist , "Playlist is updated successfully "))
+);
+// if(!updatedPlaylist){
+//      throw new ApiError(404, "Playlist not found")
+//     }
+return res.status(200).json(new ApiResponse(200 ,updatedPlaylist , "Playlist is updated successfully "))
  })
 
 
-const deletPlaylist =asyncHandler(async(req , res)=>{
+const deletePlaylist =asyncHandler(async(req , res)=>{
 //get the playlist Id
 //check for authorization
 //Db find and delete the playlist 
 //return
 
 const { playlistId }= req.params
-
 if(!playlistId){
     throw new ApiError(400, "PlaylistId is required")
 }
+
+const playlist = await Playlist.findById(playlistId);
+
+if (!playlist) {
+    throw new ApiError(404, "Playlist not found");
+}
+
 if(playlist.owner.toString() !== req.user._id.toString()){
     throw new ApiError(403 , "unauthorized user")
 }
@@ -125,7 +142,7 @@ const deletedPlaylist = await Playlist.findByIdAndDelete(playlistId)
 if(!deletedPlaylist){
     throw new ApiError(404 , "Playlist is not found")
 }
-return res.status(200).json(new ApiResponse(deletedPlaylist, "playlist is deleted successfully"))
+return res.status(200).json(new ApiResponse(200, deletedPlaylist, "playlist is deleted successfully"))
  })
 
 
@@ -140,7 +157,7 @@ const addVideoToPlaylist =asyncHandler(async(req , res)=>{
 //save
 //return
 const { playlistId } = req.params
-const { videoId } = req.body
+const { videoId } = req.params
 
 if(!videoId || !playlistId){
     throw new ApiError(400, "Video Id or playlist Id is not found")
@@ -186,4 +203,4 @@ const removeVideoFromPlaylist =asyncHandler(async(req , res)=>{
      return res.status(200).json(new ApiResponse(updatedPlaylist , "Video Removed successfully "))
 })
 
-export {createPlaylist ,getUserPlaylists,getPlaylistById,updatePlaylist,deletPlaylist, addVideoToPlaylist , removeVideoFromPlaylist}
+export {createPlaylist ,getUserPlaylists,getPlaylistById,updatePlaylist,deletePlaylist, addVideoToPlaylist , removeVideoFromPlaylist}
