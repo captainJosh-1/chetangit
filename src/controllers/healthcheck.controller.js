@@ -1,14 +1,14 @@
-import { asyncHandler } from 'express-async-handler';
-import { ApiResponse } from '../utils/ApiResponse';
+import { asyncHandler } from '../utils/asyncHandler.js';
+import { ApiResponse } from '../utils/ApiResponse.js';
 
 const healthCheck = asyncHandler(async(req , res)=>{
-return res.status(200).json(new ApiResponse({
+return res.status(200).json(new ApiResponse(200,
+  {
     status :"ok",
     message: "Server is running fine"
-   },
+  },
    "Health check passed"
-)
-  );
+));
 })
 
 export{healthCheck}
